@@ -49,25 +49,32 @@ jobs:
           fi
           docker push $IMAGE_NAME:$TAG
 
-      # 6️⃣ Notification Google Chat sécuriséey
+      # 6️⃣ Notification Google Chat sécurisée
       - name: Send Google Chat Notification
         if: always()  # Toujours exécuté même si le job échoue
         run: |
+          # Vérifier que le secret existe
+          if [ -z "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" ]; then
+            echo "⚠️ Secret GOOGLE_CHAT_WEBHOOK_URL manquant, notification ignorée"
+            exit 0
+          fi
+
+          # Préparer les infos
           STATUS="${{ job.status }}"
           COMMIT_MSG=$(git log -1 --pretty=%B)
           AUTHOR=$(git log -1 --pretty=%an)
-          MESSAGE="{
-            'text': '🚀 *CI/CD Pipeline exécutée*\n
-            • *Statut*: $STATUS\n
-            • *Auteur*: $AUTHOR\n
-            • *Commit*: $COMMIT_MSG\n
-            • *Référence*: $GITHUB_REF'
-          }"
-          if [ -n "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" ]; then
-            # Tente d'envoyer la notification, ignore l'erreur si le webhook est invalide
-            curl -X POST -H 'Content-Type: application/json' \
-              -d "$MESSAGE" \
-              ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }} || echo "⚠️ Webhook invalide, notification non envoyée"
+
+          # Message JSON avec guillemets échappés
+          MESSAGE="{\"text\": \"🚀 CI/CD Pipeline exécutée\n• Statut: $STATUS\n• Auteur: $AUTHOR\n• Commit: $COMMIT_MSG\n• Référence: $GITHUB_REF\"}"
+
+          # Envoyer la notification et gérer le code HTTP
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -d "$MESSAGE" \
+            "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}")
+
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "✅ Notification Google Chat envoyée avec succès"
           else
-            echo "⚠️ Secret GOOGLE_CHAT_WEBHOOK_URL manquant, notification ignorée"
+            echo "⚠️ Notification Google Chat échouée (HTTP $RESPONSE)"
           fi
