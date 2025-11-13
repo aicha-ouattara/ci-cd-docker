@@ -37,7 +37,7 @@ jobs:
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
           fi
-          docker build -t $IMAGE_NAME:$TAG .
+          docker build -t $IMAGE_NAME:$TAG ./app
 
       # 5️⃣ Push de l’image Docker
       - name: Push Docker image
