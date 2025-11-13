@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Récupération du code
+      # 1️⃣ Checkout du dépôt
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -49,9 +49,9 @@ jobs:
           fi
           docker push $IMAGE_NAME:$TAG
 
-      # 6️⃣ Notification Google Chat
+      # 6️⃣ Notification Google Chat sécurisée
       - name: Send Google Chat Notification
-        if: always()
+        if: always()  # Toujours exécuté même si le job échoue
         run: |
           STATUS="${{ job.status }}"
           COMMIT_MSG=$(git log -1 --pretty=%B)
@@ -63,6 +63,11 @@ jobs:
             • *Commit*: $COMMIT_MSG\n
             • *Référence*: $GITHUB_REF'
           }"
-          curl -X POST -H 'Content-Type: application/json' \
-            -d "$MESSAGE" \
-            ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+          if [ -n "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" ]; then
+            # Tente d'envoyer la notification, ignore l'erreur si le webhook est invalide
+            curl -X POST -H 'Content-Type: application/json' \
+              -d "$MESSAGE" \
+              ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }} || echo "⚠️ Webhook invalide, notification non envoyée"
+          else
+            echo "⚠️ Secret GOOGLE_CHAT_WEBHOOK_URL manquant, notification ignorée"
+          fi
