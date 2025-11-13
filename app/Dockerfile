@@ -2,7 +2,7 @@
 FROM nginx:alpine
 
 # Étape 2 : Copier ton application
-COPY ./app /usr/share/nginx/html
+COPY . /usr/share/nginx/html
 
 # Étape 3 : Exposer le port
 EXPOSE 80
