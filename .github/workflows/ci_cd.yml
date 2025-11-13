@@ -49,7 +49,7 @@ jobs:
           fi
           docker push $IMAGE_NAME:$TAG
 
-      # 6️⃣ Notification Google Chat sécurisée
+      # 6️⃣ Notification Google Chat sécuriséey
       - name: Send Google Chat Notification
         if: always()  # Toujours exécuté même si le job échoue
         run: |
