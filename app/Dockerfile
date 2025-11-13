@@ -8,4 +8,5 @@ COPY . /usr/share/nginx/html
 EXPOSE 80
 
 # Étape 4 : Commande de démarrage
+#ok
 CMD ["nginx", "-g", "daemon off;"]
